@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脚本 - 配置</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <el-card class="box-card" style="margin-top: 40px;">
+            <div slot="header" class="clearfix">
+                <span>配置脚本</span>
+                <el-button style="float: right; padding: 3px 0" type="text" @click="getConfig">刷新</el-button>
+            </div>
+            <div class="item">
+                <el-form ref="form" :model="form" label-width="80px">
+                    <el-form-item label="启用">
+                        <el-switch v-model="form.enable" active-color="#13ce66" inactive-color="#ff4949">
+                        </el-switch>
+                    </el-form-item>
+                    <el-form-item label="时间">
+                        <el-date-picker v-model="form.datetime" type="datetime" placeholder="选择日期时间"
+                            format="yyyy-MM-dd HH:mm" value-format="yyyy-MM-dd HH:mm">
+                        </el-date-picker>
+                        <el-tag>
+                            下次可抢 {{
+                            new Date(new Date().setDate(new Date().getDate()+8)).toLocaleDateString()
+                            }}
+                        </el-tag>
+                    </el-form-item>
+                    <el-button type="primary" @click="submit" style="width: 100%;">立即修改</el-button>
+                </el-form>
+            </div>
+        </el-card>
+    </div>
+</body>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                form: {
+                    enable: false,
+                    datetime: ''
+                }
+            }
+        },
+        created() {
+            this.getConfig();
+        },
+        methods: {
+            getConfig() {
+                axios.get('https://service-ca7hsczz-1304837336.bj.tencentapigw.com.cn/get', {
+                    params: {
+                        key: 'xyy.config'
+                    }
+                }).then((response) => {
+                    if (response.data && response.data.code == 1) {
+                        var data = JSON.parse(response.data.data);
+                        this.form = data;
+                        this.$message.success(response.data.message);
+                    }
+                    else {
+                        this.$message.error(response.data.message);
+                    }
+                }).catch((error) => {
+                    this.$message.error('请求错误！');
+                    console.log(error);
+                });
+            },
+            setConfig(config) {
+                console.log(config);
+                axios.get('https://service-ca7hsczz-1304837336.bj.tencentapigw.com.cn/set', {
+                    params: {
+                        key: 'xyy.config',
+                        val: JSON.stringify(config)
+                    }
+                }).then((response) => {
+                    if (response.data && response.data.code == 1) {
+                        this.$message.success(response.data.message);
+                    } else {
+                        this.$message.error(response.data.message);
+                    }
+                }).catch((error) => {
+                    this.$message.error('请求错误！');
+                    console.log(error);
+                });
+            },
+            submit() {
+                this.setConfig({
+                    enable: this.form.enable,
+                    datetime: this.form.datetime.toLocaleString()
+                });
+            }
+        }
+    })
+</script>
+
+</html>
